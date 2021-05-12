@@ -1,65 +1,50 @@
-import Head from 'next/head'
-import styles from '../styles/Home.module.css'
+import Layout from "../src/components/Layout";
+import Product from "../src/components/Product";
+import client from '../src/components/ApolloClient';
+import ParentCategoriesBlock from "../src/components/category/category-block/ParentCategoriesBlock";
+import PRODUCTS_AND_CATEGORIES_QUERY from "../src/queries/product-and-categories";
+import HeroCarousel from "../src/components/home/hero-carousel";
 
-export default function Home() {
-  return (
-    <div className={styles.container}>
-      <Head>
-        <title>Create Next App</title>
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+export default function Home (props) {
 
-      <main className={styles.main}>
-        <h1 className={styles.title}>
-          Welcome to <a href="https://nextjs.org">Next.js!</a>
-        </h1>
+	const { products, productCategories, heroCarousel } = props || {};
 
-        <p className={styles.description}>
-          Get started by editing{' '}
-          <code className={styles.code}>pages/index.js</code>
-        </p>
+	return (
+			<Layout>
+				{/*Hero Carousel*/}
+				<HeroCarousel heroCarousel={heroCarousel}/>
+				{/*Categories*/ }
+				<div className="product-categories-container container mx-auto my-32 px-4 xl:px-0">
+					<h2 className="main-title text-xl mb-5 uppercase"><span className="main-title-inner">Categories</span></h2>
+					<ParentCategoriesBlock productCategories={ productCategories }/>
+				</div>
+				{/*Products*/ }
+				<div className="products container mx-auto my-32 px-4 xl:px-0">
+					<h2 className="products-main-title main-title mb-5 text-xl uppercase"><span className="main-title-inner">Products</span></h2>
+					<div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4">
+						{ products.length ? (
+							products.map( product => <Product key={ product.id } product={ product }/> )
+						) : '' }
+					</div>
+				</div>
 
-        <div className={styles.grid}>
-          <a href="https://nextjs.org/docs" className={styles.card}>
-            <h3>Documentation &rarr;</h3>
-            <p>Find in-depth information about Next.js features and API.</p>
-          </a>
+			</Layout>
+	)
+};
 
-          <a href="https://nextjs.org/learn" className={styles.card}>
-            <h3>Learn &rarr;</h3>
-            <p>Learn about Next.js in an interactive course with quizzes!</p>
-          </a>
+export async function getStaticProps () {
 
-          <a
-            href="https://github.com/vercel/next.js/tree/master/examples"
-            className={styles.card}
-          >
-            <h3>Examples &rarr;</h3>
-            <p>Discover and deploy boilerplate example Next.js projects.</p>
-          </a>
+	const { data } = await client.query( {
+		query: PRODUCTS_AND_CATEGORIES_QUERY,
+	} );
 
-          <a
-            href="https://vercel.com/import?filter=next.js&utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-            className={styles.card}
-          >
-            <h3>Deploy &rarr;</h3>
-            <p>
-              Instantly deploy your Next.js site to a public URL with Vercel.
-            </p>
-          </a>
-        </div>
-      </main>
+	return {
+		props: {
+			productCategories: data?.productCategories?.nodes ? data.productCategories.nodes : [],
+			products: data?.products?.nodes ? data.products.nodes : [],
+			heroCarousel: data?.heroCarousel?.nodes[0]?.children?.nodes ? data.heroCarousel.nodes[0].children.nodes : []
+		},
+		revalidate: 1
+	}
 
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com?utm_source=create-next-app&utm_medium=default-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Powered by{' '}
-          <img src="/vercel.svg" alt="Vercel Logo" className={styles.logo} />
-        </a>
-      </footer>
-    </div>
-  )
-}
+};
